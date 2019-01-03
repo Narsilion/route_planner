@@ -11,7 +11,7 @@ logging.basicConfig(filename=log_path, level=logging.DEBUG, format='%(asctime)s 
 
 
 # create and configure the app
-app = flask.Flask(__name__, instance_relative_config=True)
+app = flask.Flask(__name__, instance_relative_config=True, instance_path='/home/aartemov/aero_planner_configs')
 app.config.from_pyfile('config.py', silent=True)
 
 # ensure the instance folder exists
