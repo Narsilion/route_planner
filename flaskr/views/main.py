@@ -12,34 +12,6 @@ from flaskr.implementation import tools
 config = configparser.ConfigParser()
 
 
-@app.route('/get_all_for_current', methods=['GET', 'OPTIONS'])
-def get_all_for_current():
-    """Returns all possible variants from the current location
-    Example:
-    curl http://localhost:5000/get_all_for_current?origin=LED&destination=CPH&one_way=true
-    Taken from:
-    http://map.aviasales.ru/supported_directions.json?origin_iata=LED&one_way=false&locale=ru
-    """
-
-    origin = flask.request.args.get('origin')
-    destination = flask.request.args.get('destination')
-    one_way = flask.request.args.get('one_way')
-    one_way = 'false' if not one_way or one_way == 'false' else 'true'
-
-    # Send request
-    request_data = {'origin_iata': origin, 'one_way': one_way, 'locale': 'ru'}
-    result = tools.send_request('map.aviasales.ru', 'supported_directions.json', request_data)
-
-    directions = result["directions"]
-
-    our_direction = None
-    for direction in directions:
-        if direction['iata'] == destination:
-            our_direction = direction
-
-    return flask.json.dumps(our_direction, indent=2)
-
-
 @app.route('/get_price_calendar', methods=['GET', 'OPTIONS'])
 def get_best_price_calendar():
     """Returns all possible variants from the current location
@@ -65,7 +37,6 @@ def get_best_price_calendar():
         # For some reason 'depart_date' parameter is ignored by Aviasales, so we parse it here
         for direction in result['best_prices']:
             if depart_date == direction['depart_date']:
-                app.logger.debug(direction['depart_date'])
                 final_result.append(direction)
     else:
         final_result = result['errors']
@@ -75,7 +46,7 @@ def get_best_price_calendar():
 
 @app.route('/get_prices', methods=['GET', 'OPTIONS'])
 def get_prices():
-    """Returns all possible variants from the current location
+    """Returns all possible variants for the given destination
     Example:
     curl 'http://localhost:5000/get_prices?origin=LED&destination=CPH&one_way=true&beginning_of_period=2019-01-01&trip_duration=3'
     Taken from:
@@ -88,26 +59,43 @@ def get_prices():
     destination = flask.request.args.get('destination')
     one_way = flask.request.args.get('one_way')
     one_way = 'false' if not one_way or one_way == 'false' else 'true'
-    app.logger.debug(app.config)
 
-    # Send request
-    config.read_file(open(os.path.join(app.instance_path, 'common.cfg')))
-    token = config.get('DEFAULT', 'aviasales_token')
-    request_data = {'show_to_affiliates': 'false', 'origin': origin, 'destination': destination,
-                    'beginning_of_period': beginning_of_period, 'one_way': one_way, 'period_type': 'month',
-                    'token': token}
+    sup_orig_list = tools.get_orig_list(origin, destination)
+    result_dict = dict()
 
-    result = tools.send_request('api.travelpayouts.com', 'v2/prices/latest', request_data)
+    if sup_orig_list:
+        for sup_origin in sup_orig_list:
+            # Send request
+            config.read_file(open(os.path.join(app.instance_path, 'common.cfg')))
+            token = config.get('DEFAULT', 'aviasales_token')
+            request_data = {'show_to_affiliates': 'false', 'origin': sup_origin, 'destination': destination,
+                            'beginning_of_period': beginning_of_period, 'one_way': one_way, 'period_type': 'month',
+                            'token': token}
 
-    # if not result['errors']:
-    #     final_result = []
-    #
-    #     # For some reason 'depart_date' parameter is ignored by Aviasales, so we parse it here
-    #     for direction in result['best_prices']:
-    #         if depart_date == direction['depart_date']:
-    #             app.logger.debug(direction['depart_date'])
-    #             final_result.append(direction)
-    # else:
-    #     final_result = result['errors']
+            result = tools.send_request('api.travelpayouts.com', 'v2/prices/latest', request_data)
 
-    return flask.json.dumps(result, indent=2)
+            result_dict[sup_origin] = (result['data'])
+
+        comp_dict = {}
+        tmp_dict_list = []
+        tmp_dict = dict()
+        for origin, variant_list in result_dict.items():
+            vars_dict = dict()
+            for variant in variant_list:
+                dep_date = variant['depart_date']
+                vars_dict[dep_date] = {origin: {'number_of_changes': variant['number_of_changes'],
+                                                'price': variant['value'], 'duration': variant['duration']}}
+            tmp_dict[origin] = vars_dict
+            tmp_dict_list.append(vars_dict)
+
+        for d in tmp_dict_list:
+            for k, v in d.items():
+                if k not in comp_dict:
+                    comp_dict[k] = v
+                else:
+                    keys = list(v)
+                    comp_dict[k][keys[0]] = v[keys[0]]
+
+        return flask.json.dumps(comp_dict, indent=2)
+    else:
+        return flask.json.dumps("The destination '%s' is not supported for origin '%s'" % (origin, destination))
