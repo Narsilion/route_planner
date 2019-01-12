@@ -12,6 +12,46 @@ from flaskr.implementation import tools
 config = configparser.ConfigParser()
 
 
+@app.route('/autocomplete', methods=['GET', 'OPTIONS'])
+def get_autocomplete():
+    """Returns airport codes for the given location location
+    Example:
+    curl 'http://localhost:5000/autocomplete?city=Copen'
+    Taken from:
+    http://autocomplete.travelpayouts.com/places2?term=Copenh&locale=en&types[city]=city&callback=function
+    """
+
+    city = flask.request.args.get('city')
+    request_data = {'term': city, 'locale': 'en', 'types': 'city'}
+    result = tools.send_request('autocomplete.travelpayouts.com', 'places2', request_data)
+
+    code_list = []
+    for d in result:
+        code = d['code']
+        code_list.append(code)
+
+    return flask.json.dumps(code_list, indent=2)
+
+
+@app.route('/get_iata', methods=['GET', 'OPTIONS'])
+def get_iata():
+    """Returns iata code of the given location location
+    Example:
+    curl 'http://localhost:5000/get_iata?origin=Москва&destination=Лондон'
+    Taken from:
+    https://www.travelpayouts.com/widgets_suggest_params?q=Из%20Москвы%20в%20Лондон
+    """
+
+    origin = flask.request.args.get('origin')
+    destination = flask.request.args.get('destination')
+
+    q = 'Из %s в %s' % (origin, destination)
+    request_data = {'q': q}
+    result = tools.send_request('www.travelpayouts.com', 'widgets_suggest_params', request_data)
+
+    return flask.json.dumps(result, indent=2)
+
+
 @app.route('/get_price_calendar', methods=['GET', 'OPTIONS'])
 def get_best_price_calendar():
     """Returns all possible variants from the current location
