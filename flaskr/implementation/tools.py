@@ -61,3 +61,14 @@ def get_orig_list(origin, destination):
 
     return sup_orig_list
 
+
+def get_autocomplete_value(city):
+    request_data = {'term': city, 'locale': 'en', 'types': 'city'}
+    result = send_request('autocomplete.travelpayouts.com', 'places2', request_data)
+
+    code_list = []
+    for d in result:
+        code = d['code']
+        code_list.append(code)
+
+    return code_list

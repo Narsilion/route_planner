@@ -12,27 +12,6 @@ from flaskr.implementation import tools
 config = configparser.ConfigParser()
 
 
-@app.route('/autocomplete', methods=['GET', 'OPTIONS'])
-def get_autocomplete():
-    """Returns airport codes for the given location location
-    Example:
-    curl 'http://localhost:5000/autocomplete?city=Copen'
-    Taken from:
-    http://autocomplete.travelpayouts.com/places2?term=Copenh&locale=en&types[city]=city&callback=function
-    """
-
-    city = flask.request.args.get('city')
-    request_data = {'term': city, 'locale': 'en', 'types': 'city'}
-    result = tools.send_request('autocomplete.travelpayouts.com', 'places2', request_data)
-
-    code_list = []
-    for d in result:
-        code = d['code']
-        code_list.append(code)
-
-    return flask.json.dumps(code_list, indent=2)
-
-
 @app.route('/get_iata', methods=['GET', 'OPTIONS'])
 def get_iata():
     """Returns iata code of the given location location
@@ -88,7 +67,7 @@ def get_best_price_calendar():
 def get_prices():
     """Returns all possible variants for the given destination
     Example:
-    curl 'http://localhost:5000/get_prices?origin=LED&destination=CPH&one_way=true&beginning_of_period=2019-01-01&trip_duration=3'
+    curl 'http://localhost:5000/get_prices?origin=Saint&destination=Copen&one_way=true&beginning_of_period=2019-01-01&trip_duration=3
     Taken from:
     http://api.travelpayouts.com/v2/prices/latest?currency=rub&period_type=year&page=1&limit=30&show_to_affiliates=true
     &sorting=price&token=<your token>
@@ -100,19 +79,24 @@ def get_prices():
     one_way = flask.request.args.get('one_way')
     one_way = 'false' if not one_way or one_way == 'false' else 'true'
 
-    sup_orig_list = tools.get_orig_list(origin, destination)
-    result_dict = dict()
+    origin_iata = tools.get_autocomplete_value(origin)[0]
+    dest_iata = tools.get_autocomplete_value(destination)[0]
+    sup_orig_list = tools.get_orig_list(origin_iata, dest_iata)
 
+    result_dict = dict()
     if sup_orig_list:
         for sup_origin in sup_orig_list:
             # Send request
             config.read_file(open(os.path.join(app.instance_path, 'common.cfg')))
             token = config.get('DEFAULT', 'aviasales_token')
-            request_data = {'show_to_affiliates': 'false', 'origin': sup_origin, 'destination': destination,
+            request_data = {'show_to_affiliates': 'false', 'origin': sup_origin, 'destination': dest_iata,
                             'beginning_of_period': beginning_of_period, 'one_way': one_way, 'period_type': 'month',
                             'token': token}
 
             result = tools.send_request('api.travelpayouts.com', 'v2/prices/latest', request_data)
+
+            if 'message' in result:
+                return flask.json.dumps(result['message'])
 
             result_dict[sup_origin] = (result['data'])
 
