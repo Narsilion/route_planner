@@ -81,7 +81,12 @@ def get_prices():
 
     origin_iata = tools.get_autocomplete_value(origin)[0]
     dest_iata = tools.get_autocomplete_value(destination)[0]
-    sup_orig_list = tools.get_orig_list(origin_iata, dest_iata)
+    # sup_orig_list = tools.get_orig_list(origin_iata, dest_iata)
+
+    sup_orig_list = tools.get_origins(origin_iata, dest_iata)
+
+    if 'message' in sup_orig_list:
+        return flask.json.dumps(sup_orig_list['message'])
 
     result_dict = dict()
     if sup_orig_list:
