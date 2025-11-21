@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: route-planner
+  labels:
+    app: route-planner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: route-planner
+  template:
+    metadata:
+      labels:
+        app: route-planner
+    spec:
+      containers:
+        - name: route-planner
+          image: route-planner:latest
+          ports:
+            - containerPort: 8080
