@@ -1,0 +1,40 @@
+# Development environment values
+  periodSeconds: 5
+  initialDelaySeconds: 5
+    port: http
+    path: /
+  httpGet:
+readinessProbe:
+
+  periodSeconds: 10
+  initialDelaySeconds: 30
+    port: http
+    path: /
+  httpGet:
+livenessProbe:
+
+  enabled: false
+autoscaling:
+
+    memory: 128Mi
+    cpu: 100m
+  requests:
+    memory: 256Mi
+    cpu: 250m
+  limits:
+resources:
+
+containerPort: 8080
+
+  nodePort: 30080
+  port: 80
+  type: NodePort
+service:
+
+  pullPolicy: IfNotPresent
+  tag: "latest"
+  repository: localhost:5000/route-planner
+image:
+
+replicaCount: 1
+
