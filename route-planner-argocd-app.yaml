@@ -1,0 +1,48 @@
+# MIGRATION GUIDE:
+# 1. kubectl delete application route-planner -n argocd
+#    (Deletes the ArgoCD Application resource from argocd namespace,
+#     which will trigger deletion of route-planner from default namespace)
+#
+# 2. kubectl apply -f route-planner-argocd-app.yaml
+#    (Re-creates the ArgoCD Application in argocd namespace,
+#     which will deploy route-planner to default namespace using Helm chart)
+#
+# 3. Verify:
+#    kubectl get application route-planner -n argocd
+#    kubectl get deployments -n default
+#    kubectl get services -n default
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: route-planner
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: git@github.com:Narsilion/route_planner.git
+    targetRevision: main
+    path: helm-chart
+    helm:
+      releaseName: route-planner
+      values: |
+        replicaCount: 1
+        image:
+          repository: localhost:5000/route-planner
+          tag: latest
+        service:
+          type: NodePort
+          port: 80
+          targetPort: 8000
+          nodePort: 30080
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+

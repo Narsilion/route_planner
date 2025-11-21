@@ -14,7 +14,7 @@ config = configparser.ConfigParser()
 
 @app.route('/get_iata', methods=['GET', 'OPTIONS'])
 def get_iata():
-    """Returns iata code of the given location location
+    """Returns IATA code of the given location
     Example:
     curl 'http://localhost:5000/get_iata?origin=Москва&destination=Лондон'
     Taken from:

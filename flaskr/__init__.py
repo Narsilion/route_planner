@@ -11,7 +11,7 @@ logging.basicConfig(filename=log_path, level=logging.DEBUG, format='%(asctime)s 
 
 
 # create and configure the app
-app = flask.Flask(__name__, instance_relative_config=True, instance_path='/home/aartemov/aero_planner_configs')
+app = flask.Flask(__name__, instance_relative_config=True, instance_path=os.path.join(os.environ['HOME'], 'aero_planner_configs'))
 
 # ensure the instance folder exists
 try:
@@ -23,4 +23,4 @@ import flaskr.views.main
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=8080)

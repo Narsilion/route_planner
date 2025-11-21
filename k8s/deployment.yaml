@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: route-planner
-          image: route-planner:latest
+          image: localhost:5000/route-planner:latest
           ports:
-            - containerPort: 8080
+            - containerPort: 80
