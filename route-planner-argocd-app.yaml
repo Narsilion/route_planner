@@ -29,12 +29,11 @@ spec:
       values: |
         replicaCount: 1
         image:
-          repository: localhost:5000/route-planner
+          repository: route-planner
           tag: latest
         service:
           type: NodePort
           port: 80
-          targetPort: 8000
           nodePort: 30080
 
   destination:

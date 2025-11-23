@@ -16,6 +16,21 @@ spec:
     spec:
       containers:
         - name: route-planner
-          image: localhost:5000/route-planner:latest
+          image: route-planner:24.11-25
+          imagePullPolicy: Never
           ports:
-            - containerPort: 80
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3

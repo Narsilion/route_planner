@@ -12,6 +12,12 @@ from flaskr.implementation import tools
 config = configparser.ConfigParser()
 
 
+@app.route('/', methods=['GET'])
+def health_check():
+    """Health check endpoint for Kubernetes probes"""
+    return flask.jsonify({'status': 'healthy', 'service': 'route-planner'}), 200
+
+
 @app.route('/get_iata', methods=['GET', 'OPTIONS'])
 def get_iata():
     """Returns IATA code of the given location

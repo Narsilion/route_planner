@@ -1,23 +1,36 @@
 # Use an official Python runtime as a parent image
 FROM python:3.12-slim
 
-# Set the working directory to /app
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Set the working directory
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Create data directory for logs and configs
+RUN mkdir -p /app/data/logs /app/data/configs
 
-# Create logs dir
-RUN mkdir -p /root/logs/aero_route_planner
+# Copy requirements first for better caching
+COPY requirements.txt .
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --trusted-host pypi.python.org -r requirements.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Make port 5000 available to the world outside this container
-EXPOSE 5000
+# Copy application code
+COPY . .
 
-# Define environment variable
-#ENV NAME World
+# Make startup script executable
+RUN chmod +x startup_docker.sh
 
-# Run app.py when the container launches
+# Expose port 8080
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8080/ || exit 1
+
+# Run the application
 CMD ["bash", "startup_docker.sh"]
