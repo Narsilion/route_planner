@@ -31,10 +31,17 @@ spec:
         image:
           repository: route-planner
           tag: latest
+          pullPolicy: Never
         service:
           type: NodePort
           port: 80
           nodePort: 30080
+        serviceMonitor:
+          enabled: true
+          interval: 30s
+          scrapeTimeout: 10s
+          labels:
+            release: k8s-prom
 
   destination:
     server: https://kubernetes.default.svc
