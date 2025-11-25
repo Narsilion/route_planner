@@ -9,9 +9,9 @@ replicaCount: 1
 image:
   repository: route-planner
   # This sets the pull policy for images.
-  pullPolicy: IfNotPresent
+  pullPolicy: Never
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
+  tag: "24.11-25"
 
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
@@ -171,3 +171,11 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# Prometheus ServiceMonitor configuration
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    release: k8s-prom  # Match your Prometheus release name

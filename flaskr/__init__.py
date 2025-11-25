@@ -3,6 +3,7 @@ import sys
 import flask
 import logging
 from pathlib import Path
+from prometheus_flask_exporter import PrometheusMetrics
 
 # Setup paths
 real_path = os.path.dirname(os.path.realpath(__file__))
@@ -34,6 +35,11 @@ app = flask.Flask(__name__, instance_relative_config=True, instance_path=str(dat
 app.config['JSON_SORT_KEYS'] = False
 app.config['ENV'] = APP_ENV
 app.config['DEBUG'] = APP_DEBUG
+
+# Enable Prometheus metrics
+metrics = PrometheusMetrics(app)
+# Static information as metric
+metrics.info('app_info', 'Application info', version='1.0.0', service='route-planner')
 
 # Ensure data directory exists
 data_dir.mkdir(parents=True, exist_ok=True)
