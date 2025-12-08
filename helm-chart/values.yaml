@@ -179,3 +179,10 @@ serviceMonitor:
   scrapeTimeout: 10s
   labels:
     release: k8s-prom  # Match your Prometheus release name
+
+# Istio service mesh configuration
+istio:
+  enabled: true
+  gateway:
+    hosts:
+      - "*"
